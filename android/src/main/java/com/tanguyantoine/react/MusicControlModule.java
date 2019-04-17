@@ -45,6 +45,7 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
     private boolean init = false;
     protected MediaSessionCompat session;
 
+    private MediaStyle ms;
     private MediaMetadataCompat.Builder md;
     private PlaybackStateCompat.Builder pb;
     public NotificationCompat.Builder nb;
@@ -149,7 +150,13 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
         nb = new NotificationCompat.Builder(context, CHANNEL_ID);
 
         if (!(Build.MANUFACTURER.toLowerCase(Locale.getDefault()).contains("huawei") && Build.VERSION.SDK_INT < Build.VERSION_CODES.M)) {
-            nb.setStyle(new MediaStyle().setMediaSession(session.getSessionToken()));
+            ms = new MediaStyle().setMediaSession(session.getSessionToken());
+            try {
+                ms.setShowActionsInCompactView(0, 1, 2);
+            } catch(Exception ex) {
+                Log.w(TAG, "Could not set actions in compact view", ex);
+            }
+            nb.setStyle(ms);
         }
 
         state = pb.build();
