@@ -83,6 +83,12 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
     }
 
     @Override
+    public void onCatalystInstanceDestroy() {
+        super.onCatalystInstanceDestroy();
+        stopControl();
+    }
+
+    @Override
     public Map<String, Object> getConstants() {
         Map<String, Object> map = new HashMap<>();
         map.put("STATE_ERROR", PlaybackStateCompat.STATE_ERROR);
@@ -117,9 +123,7 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
         INSTANCE = this;
 
         context = getReactApplicationContext();
-
         ComponentName compName = new ComponentName(context, MusicControlReceiver.class);
-
         emitter = new MusicControlEventEmitter(context);
 
         session = new MediaSessionCompat(context, "MusicControl", compName, null);
@@ -185,6 +189,8 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
 
         if (notification != null)
             notification.hide();
+
+        afListener.abandonAudioFocus();
         session.release();
 
         ReactApplicationContext context = getReactApplicationContext();
@@ -196,6 +202,7 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
             artworkThread.interrupt();
         artworkThread = null;
 
+        afListener = null;
         session = null;
         notification = null;
         volume = null;
@@ -426,11 +433,11 @@ public class MusicControlModule extends ReactContextBaseJavaModule implements Co
                 if(enable) {
                     if (options.hasKey("when")) {
                         if ("always".equals(options.getString("when"))) {
-                            this.notificationClose = notificationClose.ALWAYS;
-                        }else if ("paused".equals(options.getString("when"))) {
-                            this.notificationClose = notificationClose.PAUSED;
-                        }else {
-                            this.notificationClose = notificationClose.NEVER;
+                            this.notificationClose = NotificationClose.ALWAYS;
+                        } else if ("paused".equals(options.getString("when"))) {
+                            this.notificationClose = NotificationClose.PAUSED;
+                        } else {
+                            this.notificationClose = NotificationClose.NEVER;
                         }
                     }
                     return;

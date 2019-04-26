@@ -176,6 +176,21 @@ public class MusicControlNotification {
 
     public static class NotificationService extends Service {
 
+        private void stopForegroundIfAllowed() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                stopForeground(true);
+            }
+        }
+
+        private void destroy() {
+            // Destroy the notification and sessions when the task is removed (closed, killed, etc)
+            if (MusicControlModule.INSTANCE != null) {
+                MusicControlModule.INSTANCE.destroy();
+            }
+            stopForegroundIfAllowed();
+            stopSelf(); // Stop the service as we won't need it anymore
+        }
+
         @Override
         public IBinder onBind(Intent intent) {
             return null;
@@ -185,7 +200,7 @@ public class MusicControlNotification {
         public void onCreate() {
             super.onCreate();
 
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 Notification notification = MusicControlModule.INSTANCE.notification.prepareNotification(MusicControlModule.INSTANCE.nb,false);
                 startForeground(NOTIFICATION_ID, notification);
             }
@@ -198,21 +213,12 @@ public class MusicControlNotification {
 
         @Override
         public void onTaskRemoved(Intent rootIntent) {
-            // Destroy the notification and sessions when the task is removed (closed, killed, etc)
-            if(MusicControlModule.INSTANCE != null) {
-                MusicControlModule.INSTANCE.destroy();
-            }
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                stopForeground(true);
-            }
-            stopSelf(); // Stop the service as we won't need it anymore
+            destroy();
         }
 
         @Override
         public void onDestroy() {
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                stopForeground(true);
-            }
+            stopForegroundIfAllowed();
         }
     }
 }
